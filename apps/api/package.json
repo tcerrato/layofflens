@@ -1,0 +1,22 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/functions.js",
+  "scripts": {
+    "dev": "func start",
+    "build": "tsc && npm run copy-configs",
+    "copy-configs": "true",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.2.2",
+    "@azure/functions": "^4.4.1",
+    "axios": "^1.6.5",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

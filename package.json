@@ -1,0 +1,14 @@
+{
+  "name": "layofflens",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "build": "pnpm --recursive build",
+    "install:all": "pnpm install && pnpm -C apps/web install && pnpm -C apps/api install"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
+
