@@ -11,6 +11,7 @@ export interface FeedItem {
   type: "news" | "video";
   tags: string | string[]; // Can be string (JSON) from storage or parsed array
   score: number;
+  imageUrl?: string; // Optional image URL from Serper
 }
 
 export async function fetchItems(days: number = 1): Promise<FeedItem[]> {

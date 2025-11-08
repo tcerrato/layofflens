@@ -13,6 +13,7 @@ export interface FeedItem {
   type: "news" | "video";
   tags: string; // Stored as JSON string for Azure Table Storage
   score: number;
+  imageUrl?: string; // Optional image URL from Serper
 }
 
 let tableClient: TableClient | null = null;

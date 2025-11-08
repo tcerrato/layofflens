@@ -21,6 +21,7 @@ async function fetchAndSaveItems(): Promise<number> {
       type: "news",
       tags: JSON.stringify(extractTags(news.title, news.snippet)),
       score: 0,
+      imageUrl: news.imageUrl || news.thumbnailUrl || undefined,
     };
     item.score = calculateScore(item, now);
     await saveItem(item);
@@ -40,6 +41,7 @@ async function fetchAndSaveItems(): Promise<number> {
       type: "video",
       tags: JSON.stringify(extractTags(video.title, video.snippet)),
       score: 0,
+      imageUrl: video.imageUrl || video.thumbnailUrl || undefined,
     };
     item.score = calculateScore(item, now);
     await saveItem(item);

@@ -1,6 +1,8 @@
 import { fetchItems } from "@/lib/client";
 import FeedCard from "@/components/FeedCard";
 
+export const revalidate = 0; // Always revalidate on each request
+
 export default async function HomePage() {
   const items = await fetchItems(1);
 
