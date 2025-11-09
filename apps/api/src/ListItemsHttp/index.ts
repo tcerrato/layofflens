@@ -77,10 +77,16 @@ export async function listItemsHttp(
       },
     };
   } catch (error: any) {
-    context.error("Error listing items:", error);
+    const errorMessage = error?.message || String(error) || "Unknown error";
+    const errorStack = error?.stack || "";
+    context.error("Error listing items:", errorMessage, errorStack);
+    context.log("Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return {
       status: 500,
-      jsonBody: { error: error.message || "Internal server error" },
+      jsonBody: { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" ? errorStack : undefined
+      },
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
