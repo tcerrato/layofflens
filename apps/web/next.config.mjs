@@ -6,10 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Ensure trailing slash for proper routing in static hosting
-  trailingSlash: true,
-  // Generate index.html for root route
-  distDir: 'out',
+  // Don't use trailing slash - it can prevent index.html generation
+  trailingSlash: false,
 };
 
 export default nextConfig;

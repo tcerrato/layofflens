@@ -5,16 +5,25 @@ import CategoryFilter from "@/components/CategoryFilter";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import Pagination from "@/components/Pagination";
 
-export const revalidate = 0; // Always revalidate on each request
+// Force static generation - don't use dynamic features
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 export default async function ArchivePage() {
   // For static export, fetch all items (no filters at build time)
-  const response = await fetchItems();
-  // API returns paginated response when no limit is set
-  const paginatedData = response && typeof response === 'object' && 'pagination' in response 
-    ? response as PaginatedResponse 
-    : null;
-  const allFetchedItems = paginatedData ? paginatedData.items : (Array.isArray(response) ? response : []);
+  let allFetchedItems: any[] = [];
+  try {
+    const response = await fetchItems();
+    // API returns paginated response when no limit is set
+    const paginatedData = response && typeof response === 'object' && 'pagination' in response 
+      ? response as PaginatedResponse 
+      : null;
+    allFetchedItems = paginatedData ? paginatedData.items : (Array.isArray(response) ? response : []);
+  } catch (error) {
+    // If API fails during build, use empty array - page will still generate
+    console.warn('Failed to fetch items during build:', error);
+    allFetchedItems = [];
+  }
   
   // For static export, show all items (filtering will be client-side)
   const items = allFetchedItems;

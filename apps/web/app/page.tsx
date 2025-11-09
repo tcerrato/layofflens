@@ -3,14 +3,23 @@ import FeedCard from "@/components/FeedCard";
 import TypeFilter from "@/components/TypeFilter";
 import CategoryFilter from "@/components/CategoryFilter";
 
-export const revalidate = 0; // Always revalidate on each request
+// Force static generation - don't use dynamic features
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 export default async function HomePage() {
   // Fetch all items but limit to top 50 for main view
   // For static export, we fetch at build time with no filters
-  const response = await fetchItems({ limit: 50 });
-  // When limit is set, API returns FeedItem[] directly
-  const allItems = Array.isArray(response) ? response : [];
+  let allItems: any[] = [];
+  try {
+    const response = await fetchItems({ limit: 50 });
+    // When limit is set, API returns FeedItem[] directly
+    allItems = Array.isArray(response) ? response : [];
+  } catch (error) {
+    // If API fails during build, use empty array - page will still generate
+    console.warn('Failed to fetch items during build:', error);
+    allItems = [];
+  }
   
   // Extract all unique tags for the category filter
   const allTags = new Set<string>();
