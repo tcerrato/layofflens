@@ -8,6 +8,8 @@ const nextConfig = {
   },
   // Ensure trailing slash for proper routing in static hosting
   trailingSlash: true,
+  // Generate index.html for root route
+  distDir: 'out',
 };
 
 export default nextConfig;
