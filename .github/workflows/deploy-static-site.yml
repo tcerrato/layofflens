@@ -55,7 +55,8 @@ jobs:
               --source apps/web/out \
               --destination '$web' \
               --overwrite \
-              --auth-mode login
+              --auth-mode key \
+              --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
           else
             echo "Error: apps/web/out directory not found after build"
             exit 1
