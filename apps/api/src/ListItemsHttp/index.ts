@@ -110,18 +110,37 @@ app.http("ListItemsHttp", {
   methods: ["GET", "OPTIONS"],
   authLevel: "anonymous",
   handler: async (request: HttpRequest, context: InvocationContext) => {
-    // Handle OPTIONS preflight request
-    if (request.method === "OPTIONS") {
+    try {
+      context.log("Handler wrapper called, method:", request.method);
+      // Handle OPTIONS preflight request
+      if (request.method === "OPTIONS") {
+        context.log("Handling OPTIONS request");
+        return {
+          status: 200,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+          },
+        };
+      }
+      context.log("Calling listItemsHttp function");
+      return await listItemsHttp(request, context);
+    } catch (handlerError: any) {
+      context.error("Handler wrapper error:", handlerError?.message || String(handlerError));
+      context.error("Handler error stack:", handlerError?.stack || "");
       return {
-        status: 200,
+        status: 500,
+        jsonBody: { 
+          error: handlerError?.message || "Handler error",
+          type: "handler_wrapper_error"
+        },
         headers: {
+          "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
         },
       };
     }
-    return listItemsHttp(request, context);
   },
 });
 
