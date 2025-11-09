@@ -81,6 +81,10 @@ export async function listItemsHttp(
     return {
       status: 500,
       jsonBody: { error: error.message || "Internal server error" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
     };
   }
 }

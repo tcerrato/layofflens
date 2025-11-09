@@ -37,7 +37,9 @@ export async function fetchItems(options?: { days?: number; limit?: number; page
       params.set("page", options.page.toString());
     }
     
-    const url = `${API_BASE}/api/ListItemsHttp${params.toString() ? `?${params.toString()}` : ''}`;
+    // API_BASE should already include /api, so we just append the function name
+    const baseUrl = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
+    const url = `${baseUrl}/ListItemsHttp${params.toString() ? `?${params.toString()}` : ''}`;
     const response = await fetch(url, {
       cache: "no-store",
     });
