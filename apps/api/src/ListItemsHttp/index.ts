@@ -6,28 +6,39 @@ export async function listItemsHttp(
   context: InvocationContext
 ): Promise<HttpResponseInit> {
   try {
+    context.log("ListItemsHttp called");
     const daysParam = request.query.get("days");
     const limitParam = request.query.get("limit");
     const pageParam = request.query.get("page");
     
+    context.log("Query params:", { daysParam, limitParam, pageParam });
+    
     let items: any[];
     
-    // If days is specified, use it; otherwise get most recent items (default limit for archive)
-    if (daysParam) {
-      const days = parseInt(daysParam, 10);
-      if (isNaN(days) || days < 1) {
-        return {
-          status: 400,
-          jsonBody: { error: "Invalid days parameter. Must be a positive integer." },
-        };
+    try {
+      // If days is specified, use it; otherwise get most recent items (default limit for archive)
+      if (daysParam) {
+        const days = parseInt(daysParam, 10);
+        if (isNaN(days) || days < 1) {
+          return {
+            status: 400,
+            jsonBody: { error: "Invalid days parameter. Must be a positive integer." },
+          };
+        }
+        context.log("Fetching items for days:", days);
+        items = await getItemsForDays(days);
+      } else {
+        // No days parameter = get most recent items (default to 500 most recent for archive)
+        // Items are already sorted by date (newest first) in getItemsForDays
+        context.log("Fetching all items");
+        const allItems = await getItemsForDays();
+        const defaultArchiveLimit = 500; // Show most recent 500 items by default
+        items = allItems.slice(0, defaultArchiveLimit);
       }
-      items = await getItemsForDays(days);
-    } else {
-      // No days parameter = get most recent items (default to 500 most recent for archive)
-      // Items are already sorted by date (newest first) in getItemsForDays
-      const allItems = await getItemsForDays();
-      const defaultArchiveLimit = 500; // Show most recent 500 items by default
-      items = allItems.slice(0, defaultArchiveLimit);
+      context.log("Fetched items count:", items.length);
+    } catch (storageError: any) {
+      context.error("Storage error:", storageError);
+      throw new Error(`Storage operation failed: ${storageError?.message || String(storageError)}`);
     }
     
     // Apply limit if specified (for Current feed)
