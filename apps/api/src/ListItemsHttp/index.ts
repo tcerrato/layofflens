@@ -90,8 +90,21 @@ export async function listItemsHttp(
 }
 
 app.http("ListItemsHttp", {
-  methods: ["GET"],
+  methods: ["GET", "OPTIONS"],
   authLevel: "anonymous",
-  handler: listItemsHttp,
+  handler: async (request: HttpRequest, context: InvocationContext) => {
+    // Handle OPTIONS preflight request
+    if (request.method === "OPTIONS") {
+      return {
+        status: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+      };
+    }
+    return listItemsHttp(request, context);
+  },
 });
 
