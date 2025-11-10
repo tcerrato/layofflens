@@ -78,7 +78,7 @@ jobs:
           echo "Verifying functions.js content:"
           head -20 dist/functions.js
           echo ""
-          # Deploy pre-built JavaScript (no --typescript flag since we build locally)
+          # Deploy pre-built JavaScript (use --javascript flag for compiled JS)
           # The main entry point (dist/functions.js) will register all functions
-          func azure functionapp publish layofflens-func
+          func azure functionapp publish layofflens-func --javascript
 
