@@ -36,12 +36,10 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install
-      
+
       - name: Build Functions
         working-directory: apps/api
         run: |
-          # Install dependencies in the Functions project
-          pnpm install
           # Build TypeScript
           pnpm build
           # Verify build output
@@ -51,6 +49,15 @@ jobs:
           fi
           echo "✅ Build successful"
           ls -la dist/ | head -10
+
+      - name: Prepare deployment with proper node_modules
+        working-directory: apps/api
+        run: |
+          # Remove pnpm symlinked node_modules
+          rm -rf node_modules
+          # Install dependencies with npm to get real files (not symlinks)
+          npm install --production
+          echo "✅ Dependencies installed with npm for deployment"
       
       - name: Install Azure Functions Core Tools
         run: |
