@@ -25,25 +25,6 @@ jobs:
         with:
           version: 8
       
-      - name: Install dependencies
-        run: pnpm install
-      
-      - name: Build Functions
-        working-directory: apps/api
-        run: pnpm build
-      
-      - name: Verify dependencies are installed
-        working-directory: apps/api
-        run: |
-          echo "Checking for required dependencies..."
-          ls -la node_modules/ | grep -E "(cookie|undici|long|functions-extensions)" || echo "Dependencies not in node_modules"
-          if [ -f "node_modules/undici/package.json" ]; then
-            echo "✅ undici found"
-          else
-            echo "❌ undici NOT found - installing..."
-            cd apps/api && pnpm install --no-frozen-lockfile
-          fi
-      
       - name: Install Azure Functions Core Tools
         run: |
           npm install -g azure-functions-core-tools@4 --unsafe-perm true
@@ -53,30 +34,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Prepare deployment package
-        working-directory: apps/api
+      - name: Deploy to Azure Functions (let Azure build)
         run: |
-          # Ensure node_modules exists with all dependencies for deployment
-          # Azure Functions needs these at runtime
-          echo "Preparing node_modules for deployment..."
-          if [ ! -d "node_modules" ] || [ ! -d "node_modules/undici" ]; then
-            echo "Installing dependencies locally (shamefully-hoist for flat structure)..."
-            pnpm install --shamefully-hoist --no-frozen-lockfile
-          fi
-          # Verify critical dependencies are present
-          echo "Verifying dependencies..."
-          for dep in cookie undici long @azure/functions-extensions-base; do
-            if [ -d "node_modules/$dep" ] || [ -L "node_modules/$dep" ]; then
-              echo "✅ $dep found"
-            else
-              echo "❌ $dep NOT found"
-            fi
-          done
-      
-      - name: Deploy to Azure Functions
-        run: |
-          # Deploy pre-built code (we already built it above)
-          # Don't use --build remote since we build locally
+          # Deploy from project folder - Azure will build and install dependencies
+          # SCM_DO_BUILD_DURING_DEPLOYMENT=1 tells Azure to run npm install and build
           func azure functionapp publish layofflens-func --typescript
         working-directory: apps/api
 
