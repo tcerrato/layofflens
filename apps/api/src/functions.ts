@@ -1,5 +1,8 @@
 // Main entry point - imports all functions so they register at startup
 // This file MUST be executed when the module loads for Azure Functions v4 programming model
+// CRITICAL: This top-level code MUST run for functions to register
+console.log("🔵 functions.ts module is being loaded...");
+
 // Guard to ensure this only runs once even if loaded multiple times
 if (!(global as any).__layofflens_functions_loaded) {
   (global as any).__layofflens_functions_loaded = true;
@@ -38,3 +41,7 @@ if (!(global as any).__layofflens_functions_loaded) {
 } else {
   console.log("=== LayoffLens Functions: Already loaded (skipping re-registration) ===");
 }
+
+// CRITICAL: Export something to ensure this module is evaluated
+// This ensures the top-level code above executes
+export {};
