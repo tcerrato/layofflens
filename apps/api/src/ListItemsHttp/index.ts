@@ -143,59 +143,106 @@ export async function listItemsHttp(
 }
 */
 
-// SIMPLIFIED TEST VERSION - v4 compatible handler
+// MINIMAL TEST VERSION - just return success to verify handler works
 async function ListItemsHttp(req: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  context.log("=== ListItemsHttp handler called ===");
+  context.log("Method:", req.method);
+  context.log("URL:", req.url);
+  
   try {
-    context.log("ListItemsHttp handler called");
-    
+    // Step 1: Check environment variable
+    context.log("Step 1: Checking AZURE_STORAGE_ACCOUNT_NAME");
     const account = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+    context.log("Account value:", account ? "SET" : "NOT SET");
     if (!account) {
-      throw new Error("AZURE_STORAGE_ACCOUNT_NAME is missing");
+      return {
+        status: 500,
+        jsonBody: { error: "AZURE_STORAGE_ACCOUNT_NAME is missing" },
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      };
     }
 
+    // Step 2: Try creating DefaultAzureCredential
+    context.log("Step 2: Creating DefaultAzureCredential");
+    let credential;
+    try {
+      credential = new DefaultAzureCredential();
+      context.log("DefaultAzureCredential created successfully");
+    } catch (credErr: any) {
+      context.error("Failed to create DefaultAzureCredential:", credErr?.message);
+      return {
+        status: 500,
+        jsonBody: { error: `Failed to create credential: ${credErr?.message}` },
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      };
+    }
+
+    // Step 3: Try creating TableClient
+    context.log("Step 3: Creating TableClient");
     const tableName = TABLE_NAME;
     const endpoint = `https://${account}.table.core.windows.net`;
-
-    context.log("Creating TableClient with managed identity");
-    const client = new TableClient(endpoint, tableName, new DefaultAzureCredential());
-
-    context.log("Ensuring table exists");
-    // Optional safety: ensure table exists (ignore 409)
-    await client.createTable().catch(() => {
-      context.log("Table already exists (ignoring 409)");
-    });
-
-    const limit = Number(req.query.get("limit") || 50);
-    context.log("Fetching items with limit:", limit);
+    context.log("Endpoint:", endpoint);
+    context.log("Table name:", tableName);
     
-    const items: any[] = [];
-    const iter = client.listEntities();
-    
-    // Manually limit results (top option doesn't exist in SDK)
-    for await (const e of iter) {
-      items.push(e);
-      if (items.length >= limit) {
-        break;
-      }
+    let client;
+    try {
+      client = new TableClient(endpoint, tableName, credential);
+      context.log("TableClient created successfully");
+    } catch (clientErr: any) {
+      context.error("Failed to create TableClient:", clientErr?.message);
+      return {
+        status: 500,
+        jsonBody: { error: `Failed to create TableClient: ${clientErr?.message}` },
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      };
     }
 
-    context.log("Successfully fetched", items.length, "items");
+    // Step 4: Try listing entities
+    context.log("Step 4: Listing entities");
+    const limit = Number(req.query.get("limit") || 5);
+    context.log("Limit:", limit);
+    
+    const items: any[] = [];
+    try {
+      const iter = client.listEntities();
+      for await (const e of iter) {
+        items.push(e);
+        if (items.length >= limit) break;
+      }
+      context.log("Successfully fetched", items.length, "items");
+    } catch (listErr: any) {
+      context.error("Failed to list entities:", listErr?.message);
+      context.error("List error stack:", listErr?.stack);
+      return {
+        status: 500,
+        jsonBody: { 
+          error: `Failed to list entities: ${listErr?.message}`,
+          stack: listErr?.stack
+        },
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      };
+    }
 
     return {
       status: 200,
-      jsonBody: items,
+      jsonBody: { 
+        success: true,
+        itemCount: items.length,
+        items: items
+      },
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
     };
   } catch (err: any) {
-    context.error(`ListItemsHttp failed: ${err?.message}\n${err?.stack || ""}`);
+    context.error(`ListItemsHttp failed: ${err?.message}`);
+    context.error("Error stack:", err?.stack || "");
     return {
       status: 500,
       jsonBody: { 
         error: err?.message || "Internal error",
-        stack: process.env.NODE_ENV === "development" ? err?.stack : undefined
+        stack: err?.stack
       },
       headers: {
         "Content-Type": "application/json",
