@@ -175,10 +175,31 @@ async function listItemsHttpOptions(req: HttpRequest, context: InvocationContext
 
 // Wrapper handler to match FetchNowHttp pattern
 async function listItemsHttpHandler(req: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-  if (req.method === "OPTIONS") {
-    return await listItemsHttpOptions(req, context);
+  try {
+    context.log("listItemsHttpHandler called, method:", req.method);
+    if (req.method === "OPTIONS") {
+      context.log("Handling OPTIONS request");
+      return await listItemsHttpOptions(req, context);
+    }
+    context.log("Calling ListItemsHttp function");
+    const result = await ListItemsHttp(req, context);
+    context.log("ListItemsHttp returned successfully");
+    return result;
+  } catch (handlerErr: any) {
+    context.error("listItemsHttpHandler error:", handlerErr?.message || String(handlerErr));
+    context.error("Handler error stack:", handlerErr?.stack || "");
+    return {
+      status: 500,
+      jsonBody: { 
+        error: handlerErr?.message || "Handler error",
+        stack: handlerErr?.stack
+      },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    };
   }
-  return await ListItemsHttp(req, context);
 }
 
 // Function registration - match FetchNowHttp pattern exactly

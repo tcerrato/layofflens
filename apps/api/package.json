@@ -5,6 +5,7 @@
   "main": "dist/functions.js",
   "scripts": {
     "dev": "func start",
+    "start": "node dist/functions.js",
     "build": "tsc && npm run copy-configs",
     "copy-configs": "true",
     "watch": "tsc -w"
