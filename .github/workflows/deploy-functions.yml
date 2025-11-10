@@ -61,12 +61,16 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Set EnableWorkerIndexing flag
+      - name: Set required Function App settings
         run: |
           az functionapp config appsettings set \
             --name layofflens-func \
             --resource-group LayoffLens \
-            --settings AzureWebJobsFeatureFlags=EnableWorkerIndexing
+            --settings \
+              FUNCTIONS_EXTENSION_VERSION=~4 \
+              WEBSITE_RUN_FROM_PACKAGE=1 \
+              WEBSITE_NODE_DEFAULT_VERSION=~20 \
+              AzureWebJobsFeatureFlags=EnableWorkerIndexing
 
       - name: Deploy to Azure Functions
         working-directory: apps/api
@@ -78,16 +82,12 @@ jobs:
           echo ""
           echo "Checking for required files:"
           [ -f "package.json" ] && echo "✅ package.json" || echo "❌ package.json missing"
-          [ -f "index.js" ] && echo "✅ index.js" || echo "❌ index.js missing"
           [ -f "host.json" ] && echo "✅ host.json" || echo "❌ host.json missing"
           [ -f "dist/functions.js" ] && echo "✅ dist/functions.js" || echo "❌ dist/functions.js missing"
           [ -d "node_modules" ] && echo "✅ node_modules" || echo "❌ node_modules missing"
           echo ""
           echo "Verifying package.json main field:"
           grep '"main"' package.json
-          echo ""
-          echo "Verifying index.js content:"
-          cat index.js
           echo ""
           echo "Verifying functions.js content:"
           head -20 dist/functions.js
