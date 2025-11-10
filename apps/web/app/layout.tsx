@@ -48,9 +48,9 @@ export default function RootLayout({
                   </p>
                 </div>
                 <img
-                  src="https://layofflens.blob.core.windows.net/layofflens/layofflens-logo.png"
+                  src="https://layofflens.blob.core.windows.net/layofflens/logo-redo.png"
                   alt="LayoffLens Logo"
-                  className="h-20 w-auto object-contain"
+                  className="h-20 w-auto object-contain rounded-xl"
                 />
               </div>
             </div>
