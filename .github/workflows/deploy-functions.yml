@@ -53,13 +53,21 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
+      - name: Prepare deployment package
+        working-directory: apps/api
+        run: |
+          # Copy node_modules from pnpm store to local node_modules for deployment
+          # This ensures Azure Functions can find all dependencies
+          echo "Preparing node_modules for deployment..."
+          if [ ! -d "node_modules" ] || [ ! -d "node_modules/undici" ]; then
+            echo "Installing dependencies locally..."
+            pnpm install --shamefully-hoist
+          fi
+          # Verify critical dependencies
+          ls -la node_modules/ | grep -E "(cookie|undici|long|functions-extensions)" || echo "Warning: Some dependencies missing"
+      
       - name: Deploy to Azure Functions
         run: |
-          # Ensure node_modules exists with all dependencies
-          if [ ! -d "node_modules/undici" ]; then
-            echo "Installing missing dependencies..."
-            pnpm install --no-frozen-lockfile
-          fi
-          func azure functionapp publish layofflens-func --typescript
+          func azure functionapp publish layofflens-func --typescript --build remote
         working-directory: apps/api
 
