@@ -32,6 +32,8 @@ apps/api/local.settings.json
 apps/api/.vscode/
 apps/api/bin/
 apps/api/obj/
+# V3 function.json files (not used in v4 programming model)
+**/function.json
 
 # IDE
 .vscode/

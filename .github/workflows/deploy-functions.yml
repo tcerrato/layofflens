@@ -72,6 +72,10 @@ jobs:
           az functionapp config appsettings set \
             --name layofflens-func \
             --resource-group LayoffLens \
+            --settings FUNCTIONS_WORKER_RUNTIME=node || true
+          az functionapp config appsettings set \
+            --name layofflens-func \
+            --resource-group LayoffLens \
             --settings AzureWebJobsFeatureFlags=EnableWorkerIndexing || true
 
       - name: Deploy to Azure Functions
@@ -93,6 +97,9 @@ jobs:
           echo ""
           echo "Verifying functions.js content:"
           head -20 dist/functions.js
+          echo ""
+          echo "Verifying host.json:"
+          cat host.json
           echo ""
           # Deploy pre-built JavaScript (use --javascript flag for compiled JS)
           # The main entry point (dist/functions.js) will register all functions
