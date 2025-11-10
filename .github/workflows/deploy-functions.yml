@@ -34,10 +34,47 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Deploy to Azure Functions (let Azure build)
-        run: |
-          # Deploy from project folder - Azure will build and install dependencies
-          # SCM_DO_BUILD_DURING_DEPLOYMENT=1 tells Azure to run npm install and build
-          func azure functionapp publish layofflens-func --typescript
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build Functions
         working-directory: apps/api
+        run: |
+          # Install dependencies in the Functions project
+          pnpm install
+          # Build TypeScript
+          pnpm build
+          # Verify build output
+          if [ ! -f "dist/functions.js" ]; then
+            echo "❌ dist/functions.js not found after build!"
+            exit 1
+          fi
+          echo "✅ Build successful"
+          ls -la dist/ | head -10
+      
+      - name: Install Azure Functions Core Tools
+        run: |
+          npm install -g azure-functions-core-tools@4 --unsafe-perm true
+      
+      - name: Configure Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Deploy to Azure Functions
+        working-directory: apps/api
+        run: |
+          # Verify we're in the right directory with all files
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la | head -20
+          echo ""
+          echo "Checking for required files:"
+          [ -f "package.json" ] && echo "✅ package.json" || echo "❌ package.json missing"
+          [ -f "host.json" ] && echo "✅ host.json" || echo "❌ host.json missing"
+          [ -f "dist/functions.js" ] && echo "✅ dist/functions.js" || echo "❌ dist/functions.js missing"
+          [ -d "node_modules" ] && echo "✅ node_modules" || echo "❌ node_modules missing"
+          echo ""
+          # Deploy from apps/api directory - this includes all Functions files
+          func azure functionapp publish layofflens-func --typescript
 
