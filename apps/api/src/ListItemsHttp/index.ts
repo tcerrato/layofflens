@@ -1,5 +1,15 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
+import { TableClient } from "@azure/data-tables";
+import { DefaultAzureCredential } from "@azure/identity";
 
+const TABLE_NAME = "layoffitems";
+const ACCOUNT = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+
+// TEMPORARY SIMPLIFIED VERSION FOR TESTING MANAGED IDENTITY
+// TODO: Restore original code after confirming managed identity works
+
+// ORIGINAL CODE (COMMENTED OUT FOR TESTING):
+/*
 // Import with error handling
 let getItemsForDays: any;
 try {
@@ -127,58 +137,108 @@ export async function listItemsHttp(
     };
   }
 }
+*/
 
-// Wrap function registration in try-catch to catch initialization errors
-try {
-  app.http("ListItemsHttp", {
-    methods: ["GET", "OPTIONS"],
-    authLevel: "anonymous",
-    handler: async (request: HttpRequest, context: InvocationContext) => {
-      try {
-        context.log("Handler wrapper called, method:", request.method);
-        context.log("Storage module loaded:", !!getItemsForDays);
-        
-        // Handle OPTIONS preflight request
-        if (request.method === "OPTIONS") {
-          context.log("Handling OPTIONS request");
-          return {
-            status: 200,
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "GET, OPTIONS",
-              "Access-Control-Allow-Headers": "Content-Type",
-            },
-          };
-        }
-        context.log("Calling listItemsHttp function");
-        return await listItemsHttp(request, context);
-      } catch (handlerError: any) {
-        const errorMsg = handlerError?.message || String(handlerError);
-        const errorStack = handlerError?.stack || "";
-        context.error("Handler wrapper error:", errorMsg);
-        context.error("Handler error stack:", errorStack);
-        context.error("Error type:", handlerError?.constructor?.name || "Unknown");
-        context.error("Full error:", JSON.stringify(handlerError, Object.getOwnPropertyNames(handlerError)));
+// SIMPLIFIED TEST VERSION
+export async function listItemsHttp(
+  request: HttpRequest,
+  context: InvocationContext
+): Promise<HttpResponseInit> {
+  try {
+    context.log("ListItemsHttp (simplified) called");
+    
+    if (!ACCOUNT) {
+      throw new Error("AZURE_STORAGE_ACCOUNT_NAME is missing");
+    }
+
+    context.log("Creating TableClient with managed identity");
+    const endpoint = `https://${ACCOUNT}.table.core.windows.net`;
+    const client = new TableClient(endpoint, TABLE_NAME, new DefaultAzureCredential());
+
+    context.log("Ensuring table exists");
+    // Optional: ensure table exists (ignore 409 conflict)
+    await client.createTable().catch(() => {
+      context.log("Table already exists or creation failed (ignoring)");
+    });
+
+    const limit = Number(request.query.get("limit") || 50);
+    context.log("Fetching items with limit:", limit);
+    
+    const iter = client.listEntities({ queryOptions: { top: limit } });
+    const items: any[] = [];
+    
+    for await (const e of iter) {
+      items.push(e);
+    }
+
+    context.log("Successfully fetched", items.length, "items");
+
+    return {
+      status: 200,
+      jsonBody: items,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    };
+  } catch (err: any) {
+    context.error("ListItemsHttp failed:", err?.message);
+    context.error("Error stack:", err?.stack || "");
+    return {
+      status: 500,
+      jsonBody: { 
+        error: err?.message || "Internal error",
+        stack: process.env.NODE_ENV === "development" ? err?.stack : undefined
+      },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    };
+  }
+}
+
+// Function registration
+app.http("ListItemsHttp", {
+  methods: ["GET", "OPTIONS"],
+  authLevel: "anonymous",
+  handler: async (request: HttpRequest, context: InvocationContext) => {
+    try {
+      context.log("Handler wrapper called, method:", request.method);
+      
+      // Handle OPTIONS preflight request
+      if (request.method === "OPTIONS") {
+        context.log("Handling OPTIONS request");
         return {
-          status: 500,
-          jsonBody: { 
-            error: errorMsg,
-            type: "handler_wrapper_error",
-            stack: process.env.NODE_ENV === "development" ? errorStack : undefined
-          },
+          status: 200,
           headers: {
-            "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
           },
         };
       }
-    },
-  });
-  console.log("ListItemsHttp function registered successfully");
-} catch (registrationError: any) {
-  console.error("Failed to register ListItemsHttp function:", registrationError?.message || String(registrationError));
-  console.error("Registration error stack:", registrationError?.stack || "");
-  // Re-throw to prevent silent failure
-  throw registrationError;
-}
+      
+      context.log("Calling listItemsHttp function");
+      return await listItemsHttp(request, context);
+    } catch (handlerError: any) {
+      const errorMsg = handlerError?.message || String(handlerError);
+      const errorStack = handlerError?.stack || "";
+      context.error("Handler wrapper error:", errorMsg);
+      context.error("Handler error stack:", errorStack);
+      return {
+        status: 500,
+        jsonBody: { 
+          error: errorMsg,
+          type: "handler_wrapper_error",
+          stack: process.env.NODE_ENV === "development" ? errorStack : undefined
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      };
+    }
+  },
+});
 
