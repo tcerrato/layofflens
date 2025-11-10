@@ -2,7 +2,7 @@
   "name": "api",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/functions.js",
+  "main": "index.js",
   "scripts": {
     "dev": "func start",
     "build": "tsc && npm run copy-configs",
