@@ -1,5 +1,14 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { getItemsForDays } from "../Shared/storage";
+
+// Import with error handling
+let getItemsForDays: any;
+try {
+  const storageModule = require("../Shared/storage");
+  getItemsForDays = storageModule.getItemsForDays;
+} catch (importError: any) {
+  console.error("Failed to import storage module:", importError?.message || String(importError));
+  // We'll handle this in the handler
+}
 
 export async function listItemsHttp(
   request: HttpRequest,
@@ -7,6 +16,19 @@ export async function listItemsHttp(
 ): Promise<HttpResponseInit> {
   try {
     context.log("ListItemsHttp called");
+    
+    // Check if storage module loaded
+    if (!getItemsForDays) {
+      context.error("Storage module not loaded");
+      return {
+        status: 500,
+        jsonBody: { error: "Storage module failed to load" },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      };
+    }
     const daysParam = request.query.get("days");
     const limitParam = request.query.get("limit");
     const pageParam = request.query.get("page");
