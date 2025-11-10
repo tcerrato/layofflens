@@ -32,6 +32,18 @@ jobs:
         working-directory: apps/api
         run: pnpm build
       
+      - name: Verify dependencies are installed
+        working-directory: apps/api
+        run: |
+          echo "Checking for required dependencies..."
+          ls -la node_modules/ | grep -E "(cookie|undici|long|functions-extensions)" || echo "Dependencies not in node_modules"
+          if [ -f "node_modules/undici/package.json" ]; then
+            echo "✅ undici found"
+          else
+            echo "❌ undici NOT found - installing..."
+            cd apps/api && pnpm install --no-frozen-lockfile
+          fi
+      
       - name: Install Azure Functions Core Tools
         run: |
           npm install -g azure-functions-core-tools@4 --unsafe-perm true
@@ -43,6 +55,11 @@ jobs:
       
       - name: Deploy to Azure Functions
         run: |
+          # Ensure node_modules exists with all dependencies
+          if [ ! -d "node_modules/undici" ]; then
+            echo "Installing missing dependencies..."
+            pnpm install --no-frozen-lockfile
+          fi
           func azure functionapp publish layofflens-func --typescript
         working-directory: apps/api
 
