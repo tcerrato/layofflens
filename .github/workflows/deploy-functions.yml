@@ -69,7 +69,6 @@ jobs:
             --settings \
               FUNCTIONS_EXTENSION_VERSION=~4 \
               WEBSITE_RUN_FROM_PACKAGE=1 \
-              WEBSITE_NODE_DEFAULT_VERSION=~20 \
               AzureWebJobsFeatureFlags=EnableWorkerIndexing
 
       - name: Deploy to Azure Functions
