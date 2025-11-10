@@ -75,6 +75,10 @@ jobs:
           [ -f "dist/functions.js" ] && echo "✅ dist/functions.js" || echo "❌ dist/functions.js missing"
           [ -d "node_modules" ] && echo "✅ node_modules" || echo "❌ node_modules missing"
           echo ""
-          # Deploy from apps/api directory - this includes all Functions files
-          func azure functionapp publish layofflens-func --typescript
+          echo "Verifying functions.js content:"
+          head -20 dist/functions.js
+          echo ""
+          # Deploy pre-built JavaScript (no --typescript flag since we build locally)
+          # The main entry point (dist/functions.js) will register all functions
+          func azure functionapp publish layofflens-func
 
