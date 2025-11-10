@@ -56,18 +56,27 @@ jobs:
       - name: Prepare deployment package
         working-directory: apps/api
         run: |
-          # Copy node_modules from pnpm store to local node_modules for deployment
-          # This ensures Azure Functions can find all dependencies
+          # Ensure node_modules exists with all dependencies for deployment
+          # Azure Functions needs these at runtime
           echo "Preparing node_modules for deployment..."
           if [ ! -d "node_modules" ] || [ ! -d "node_modules/undici" ]; then
-            echo "Installing dependencies locally..."
-            pnpm install --shamefully-hoist
+            echo "Installing dependencies locally (shamefully-hoist for flat structure)..."
+            pnpm install --shamefully-hoist --no-frozen-lockfile
           fi
-          # Verify critical dependencies
-          ls -la node_modules/ | grep -E "(cookie|undici|long|functions-extensions)" || echo "Warning: Some dependencies missing"
+          # Verify critical dependencies are present
+          echo "Verifying dependencies..."
+          for dep in cookie undici long @azure/functions-extensions-base; do
+            if [ -d "node_modules/$dep" ] || [ -L "node_modules/$dep" ]; then
+              echo "✅ $dep found"
+            else
+              echo "❌ $dep NOT found"
+            fi
+          done
       
       - name: Deploy to Azure Functions
         run: |
-          func azure functionapp publish layofflens-func --typescript --build remote
+          # Deploy pre-built code (we already built it above)
+          # Don't use --build remote since we build locally
+          func azure functionapp publish layofflens-func --typescript
         working-directory: apps/api
 
