@@ -6,7 +6,6 @@ import HeroStatsBanner from "@/components/HeroStatsBanner";
 
 // Use ISR (Incremental Static Regeneration) - revalidate every hour
 // This ensures fresh data appears within an hour of Azure Function fetches
-// Updated to test deployment trigger
 export const dynamic = 'force-static';
 export const revalidate = 3600; // Revalidate every 1 hour (3600 seconds)
 
