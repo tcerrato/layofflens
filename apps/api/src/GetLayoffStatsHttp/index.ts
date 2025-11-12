@@ -111,20 +111,13 @@ export async function getLayoffStatsHttp(
       }))
       .sort((a, b) => a.week.localeCompare(b.week));
 
-    // Calculate sector stats
+    // Calculate sector stats using AI-extracted sector field
     const sectorMap = new Map<string, number>();
     newsItems.forEach((item: any) => {
-      const tags = typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : (item.tags || []);
-
-      // Common sector tags
-      const sectors = ['Tech', 'Finance', 'Retail', 'Healthcare', 'Manufacturing',
-                      'Energy', 'Transportation', 'Hospitality', 'Education', 'Media'];
-
-      tags.forEach((tag: string) => {
-        if (sectors.includes(tag)) {
-          sectorMap.set(tag, (sectorMap.get(tag) || 0) + 1);
-        }
-      });
+      // Use AI-extracted sector field if available
+      if (item.sector && item.sector !== 'null' && item.sector !== 'undefined') {
+        sectorMap.set(item.sector, (sectorMap.get(item.sector) || 0) + 1);
+      }
     });
 
     const totalSectorMentions = Array.from(sectorMap.values()).reduce((sum, count) => sum + count, 0);
