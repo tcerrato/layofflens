@@ -1,6 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { fetchNewsItems, fetchVideoItems } from "../Shared/serper";
-import { saveItem, FeedItem } from "../Shared/storage";
+import { saveItem, FeedItem, cleanupOldItems } from "../Shared/storage";
 import { calculateScore } from "../Shared/scoring";
 import { bestImageFor } from "../Shared/image-resolver";
 import { isVideoPlatform } from "../Shared/thumb";
@@ -200,12 +200,19 @@ export async function fetchNowHttp(
     const savedCount = await fetchAndSaveItems();
     context.log(`Saved ${savedCount} items`);
 
+    // Clean up old items (older than 90 days)
+    const retentionDays = parseInt(process.env.RETENTION_DAYS || "90", 10);
+    context.log(`Starting cleanup of items older than ${retentionDays} days...`);
+    const deletedCount = await cleanupOldItems(retentionDays);
+    context.log(`Cleanup completed. Deleted ${deletedCount} old items`);
+
     return {
       status: 200,
       jsonBody: {
         success: true,
-        message: `Fetched and saved ${savedCount} items`,
-        count: savedCount,
+        message: `Fetched and saved ${savedCount} items, deleted ${deletedCount} old items`,
+        saved: savedCount,
+        deleted: deletedCount,
       },
     };
   } catch (error: any) {

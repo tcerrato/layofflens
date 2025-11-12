@@ -1,6 +1,6 @@
 import { app, Timer, InvocationContext } from "@azure/functions";
 import { fetchNewsItems, fetchVideoItems } from "../Shared/serper";
-import { saveItem, FeedItem } from "../Shared/storage";
+import { saveItem, FeedItem, cleanupOldItems } from "../Shared/storage";
 import { calculateScore } from "../Shared/scoring";
 import { bestImageFor } from "../Shared/image-resolver";
 import { isVideoPlatform } from "../Shared/thumb";
@@ -187,8 +187,15 @@ export async function fetchDailyTimer(
 ): Promise<void> {
   context.log("Timer trigger fired. Starting daily fetch...");
   try {
+    // Fetch and save new items
     const savedCount = await fetchAndSaveItems();
     context.log(`Daily fetch completed. Saved ${savedCount} items`);
+
+    // Clean up old items (older than 90 days)
+    const retentionDays = parseInt(process.env.RETENTION_DAYS || "90", 10);
+    context.log(`Starting cleanup of items older than ${retentionDays} days...`);
+    const deletedCount = await cleanupOldItems(retentionDays);
+    context.log(`Cleanup completed. Deleted ${deletedCount} old items`);
   } catch (error: any) {
     context.error("Error in daily fetch:", error);
     throw error;

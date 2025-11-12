@@ -115,3 +115,34 @@ export async function getItemsForDays(days?: number): Promise<FeedItem[]> {
   });
 }
 
+/**
+ * Delete items older than the specified number of days
+ * @param retentionDays Number of days to keep (default: 90)
+ * @returns Number of items deleted
+ */
+export async function cleanupOldItems(retentionDays: number = 90): Promise<number> {
+  await ensureTableExists();
+  const client = getTableClient();
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+  let deletedCount = 0;
+  const entities = client.listEntities<FeedItem>();
+
+  for await (const entity of entities) {
+    const itemDate = new Date(entity.date);
+    if (itemDate < cutoffDate) {
+      try {
+        await client.deleteEntity(entity.partitionKey, entity.rowKey);
+        deletedCount++;
+      } catch (error: any) {
+        // Log error but continue with other deletions
+        console.error(`Failed to delete entity ${entity.partitionKey}/${entity.rowKey}:`, error.message);
+      }
+    }
+  }
+
+  return deletedCount;
+}
+
