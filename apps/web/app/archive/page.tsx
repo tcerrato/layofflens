@@ -13,6 +13,7 @@ export default async function ArchivePage() {
   // Fetch first page (50 items) for fast initial load
   // API returns paginated response when page param is used without limit
   let allFetchedItems: any[] = [];
+  let totalCount = 0;
   try {
     const response = await fetchItems({ page: 1 });
     // When page is set without limit, API returns PaginatedResponse
@@ -20,12 +21,13 @@ export default async function ArchivePage() {
       ? response as PaginatedResponse
       : null;
     allFetchedItems = paginatedData ? paginatedData.items : (Array.isArray(response) ? response : []);
+    totalCount = paginatedData?.pagination?.totalItems || allFetchedItems.length;
   } catch (error) {
     // If API fails during build, use empty array - page will still generate
     console.warn('Failed to fetch items during build:', error);
     allFetchedItems = [];
   }
-  
+
   // Extract all unique tags for the category filter
   const allTags = new Set<string>();
   allFetchedItems.forEach((item) => {
@@ -33,7 +35,7 @@ export default async function ArchivePage() {
     tags.forEach((tag: string) => allTags.add(tag));
   });
 
-  const totalItems = allFetchedItems.length;
+  const displayedItems = allFetchedItems.length;
 
   return (
     <div>
@@ -44,7 +46,7 @@ export default async function ArchivePage() {
               Archive
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 mt-1">
-              Browse all stored news and videos ({totalItems} items)
+              Displaying {displayedItems} of {totalCount} items
             </p>
           </div>
           <TypeFilter />
