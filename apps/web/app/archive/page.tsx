@@ -2,7 +2,6 @@ import { fetchItems, PaginatedResponse } from "@/lib/client";
 import FeedClient from "@/components/FeedClient";
 import TypeFilter from "@/components/TypeFilter";
 import CategoryFilter from "@/components/CategoryFilter";
-import DateRangeFilter from "@/components/DateRangeFilter";
 import SearchFilter from "@/components/SearchFilter";
 
 // Dynamic rendering with 5-minute cache
@@ -11,13 +10,14 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 300; // Cache for 5 minutes (300 seconds)
 
 export default async function ArchivePage() {
-  // For static export, fetch all items (no filters at build time)
+  // Fetch first page (50 items) for fast initial load
+  // API returns paginated response when page param is used without limit
   let allFetchedItems: any[] = [];
   try {
-    const response = await fetchItems();
-    // API returns paginated response when no limit is set
-    const paginatedData = response && typeof response === 'object' && 'pagination' in response 
-      ? response as PaginatedResponse 
+    const response = await fetchItems({ page: 1 });
+    // When page is set without limit, API returns PaginatedResponse
+    const paginatedData = response && typeof response === 'object' && 'pagination' in response
+      ? response as PaginatedResponse
       : null;
     allFetchedItems = paginatedData ? paginatedData.items : (Array.isArray(response) ? response : []);
   } catch (error) {
@@ -51,7 +51,6 @@ export default async function ArchivePage() {
         </div>
         <div className="mt-4 space-y-3">
           <SearchFilter />
-          <DateRangeFilter />
           <CategoryFilter availableTags={Array.from(allTags)} />
         </div>
       </div>

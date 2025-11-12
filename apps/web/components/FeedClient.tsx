@@ -14,6 +14,11 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
   const searchParams = useSearchParams();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  // For archive (no limit), show Load More if we got 50 items (page size)
+  // For home (with limit), don't show Load More
+  const [hasMore, setHasMore] = useState(!limit && initialItems.length === 50);
 
   const typeFilter = searchParams.get("filter") || "all";
   const categoryFilter = searchParams.get("category") || "all";
@@ -128,11 +133,46 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
     );
   }
 
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      // Archive page: use page param only (no limit) to get paginated response
+      const response = await fetchItems({ page: nextPage });
+      const newItems = response && 'items' in response ? response.items : [];
+
+      if (newItems.length === 0 || newItems.length < 50) {
+        setHasMore(false);
+      }
+
+      setItems([...items, ...newItems]);
+      setCurrentPage(nextPage);
+    } catch (error) {
+      console.warn("Failed to fetch more items:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredItems.map((item) => (
-        <FeedCard key={`${item.partitionKey}-${item.rowKey}`} item={item} />
-      ))}
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredItems.map((item) => (
+          <FeedCard key={`${item.partitionKey}-${item.rowKey}`} item={item} />
+        ))}
+      </div>
+
+      {hasMore && (
+        <div className="mt-8 text-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
+          >
+            {loadingMore ? "Loading..." : "Load More"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
