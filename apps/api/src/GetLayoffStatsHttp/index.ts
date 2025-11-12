@@ -167,6 +167,7 @@ export async function getLayoffStatsHttp(
       ? Math.round(((currentWeekCount - lastWeekCount) / lastWeekCount) * 100)
       : 0;
 
+    // Get top sector from sectors that have data (ignore nulls)
     const topSector = bySector.length > 0 ? bySector[0].sector : 'N/A';
 
     const response: LayoffStatsResponse = {
