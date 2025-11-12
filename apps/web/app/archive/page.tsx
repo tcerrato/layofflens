@@ -5,10 +5,10 @@ import CategoryFilter from "@/components/CategoryFilter";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import SearchFilter from "@/components/SearchFilter";
 
-// Use ISR (Incremental Static Regeneration) - revalidate every hour
-// This ensures fresh data appears within an hour of Azure Function fetches
-export const dynamic = 'force-static';
-export const revalidate = 3600; // Revalidate every 1 hour (3600 seconds)
+// Dynamic rendering with 5-minute cache
+// Always fetches fresh data but caches at edge for 5 minutes to reduce API calls
+export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Cache for 5 minutes (300 seconds)
 
 export default async function ArchivePage() {
   // For static export, fetch all items (no filters at build time)
