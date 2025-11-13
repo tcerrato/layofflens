@@ -46,9 +46,9 @@ export default function AnalyticsCharts({ stats }: AnalyticsChartsProps) {
     weekLabel: `Week ${item.week.split('-W')[1]}`,
   }));
 
-  // Handle sector bar click - navigate to archive with sector filter and 7-day range
+  // Handle sector bar click - navigate to archive with sector filter and 90-day range (matches analytics timeframe)
   const handleSectorClick = (sector: string) => {
-    router.push(`/archive?sector=${encodeURIComponent(sector)}&days=7`);
+    router.push(`/archive?sector=${encodeURIComponent(sector)}&days=90`);
   };
 
   return (

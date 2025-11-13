@@ -11,8 +11,9 @@ export async function listItemsHttp(
     const daysParam = request.query.get("days");
     const limitParam = request.query.get("limit");
     const pageParam = request.query.get("page");
+    const sectorParam = request.query.get("sector");
 
-    context.log("Query params:", { daysParam, limitParam, pageParam });
+    context.log("Query params:", { daysParam, limitParam, pageParam, sectorParam });
 
     let items: any[];
 
@@ -40,6 +41,13 @@ export async function listItemsHttp(
     } catch (storageError: any) {
       context.error("Storage error:", storageError);
       throw new Error(`Storage operation failed: ${storageError?.message || String(storageError)}`);
+    }
+
+    // Apply sector filter if specified (before pagination)
+    if (sectorParam) {
+      context.log("Filtering by sector:", sectorParam);
+      items = items.filter((item: any) => item.sector === sectorParam);
+      context.log("Items after sector filter:", items.length);
     }
 
     // Apply limit if specified (for Current feed)

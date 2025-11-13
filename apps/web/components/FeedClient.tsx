@@ -45,7 +45,7 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
     }
   }, [initialItems.length, limit]);
 
-  // Apply client-side filtering
+  // Apply client-side filtering (sector filtering now done by API)
   const filteredItems = items.filter((item) => {
     // Type filter
     if (typeFilter !== "all" && item.type !== typeFilter) {
@@ -58,11 +58,6 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
       if (!tags.includes(categoryFilter)) {
         return false;
       }
-    }
-
-    // Sector filter
-    if (sectorFilter && item.sector !== sectorFilter) {
-      return false;
     }
 
     // Search filter (case-insensitive search in title and snippet with word boundaries)
@@ -144,11 +139,14 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      // Archive page: use page param with optional days filter to get paginated response
-      const fetchOptions: { page: number; days?: number } = { page: nextPage };
+      // Archive page: use page param with optional days and sector filters to get paginated response
+      const fetchOptions: { page: number; days?: number; sector?: string } = { page: nextPage };
       const daysValue = daysParam ? parseInt(daysParam, 10) : undefined;
       if (daysValue && !isNaN(daysValue) && daysValue > 0) {
         fetchOptions.days = daysValue;
+      }
+      if (sectorFilter) {
+        fetchOptions.sector = sectorFilter;
       }
       const response = await fetchItems(fetchOptions);
       const newItems = response && 'items' in response ? response.items : [];

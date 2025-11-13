@@ -19,14 +19,17 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
   const daysParam = params.days ? parseInt(params.days as string, 10) : undefined;
   const sectorParam = params.sector as string | undefined;
   // Fetch first page (50 items) for fast initial load
-  // If days param is provided, API will filter to that time range
+  // If days or sector params are provided, API will filter accordingly
   // API returns paginated response when page param is used without limit
   let allFetchedItems: any[] = [];
   let totalCount = 0;
   try {
-    const fetchOptions: { page: number; days?: number } = { page: 1 };
+    const fetchOptions: { page: number; days?: number; sector?: string } = { page: 1 };
     if (daysParam && !isNaN(daysParam) && daysParam > 0) {
       fetchOptions.days = daysParam;
+    }
+    if (sectorParam) {
+      fetchOptions.sector = sectorParam;
     }
     const response = await fetchItems(fetchOptions);
     // When page is set without limit, API returns PaginatedResponse
