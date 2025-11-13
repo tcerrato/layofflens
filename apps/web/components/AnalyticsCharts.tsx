@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LayoffStats } from "@/lib/client";
 import {
   LineChart,
@@ -37,12 +38,18 @@ const COLORS = [
 
 export default function AnalyticsCharts({ stats }: AnalyticsChartsProps) {
   const { summary, byWeek, bySector, topCompanies } = stats;
+  const router = useRouter();
 
   // Format week labels for better readability
   const weeklyData = byWeek.map((item) => ({
     ...item,
     weekLabel: `Week ${item.week.split('-W')[1]}`,
   }));
+
+  // Handle sector bar click - navigate to archive with sector filter and 7-day range
+  const handleSectorClick = (sector: string) => {
+    router.push(`/archive?sector=${encodeURIComponent(sector)}&days=7`);
+  };
 
   return (
     <div className="space-y-8">
@@ -173,7 +180,17 @@ export default function AnalyticsCharts({ stats }: AnalyticsChartsProps) {
                       borderRadius: '8px',
                     }}
                   />
-                  <Bar dataKey="count" fill="#6366f1" name="Articles" />
+                  <Bar
+                    dataKey="count"
+                    fill="#6366f1"
+                    name="Articles"
+                    onClick={(data: any) => {
+                      if (data?.payload?.sector) {
+                        handleSectorClick(data.payload.sector);
+                      }
+                    }}
+                    cursor="pointer"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

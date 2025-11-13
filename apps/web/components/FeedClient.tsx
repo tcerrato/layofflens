@@ -23,6 +23,8 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
   const typeFilter = searchParams.get("filter") || "all";
   const categoryFilter = searchParams.get("category") || "all";
   const searchQuery = searchParams.get("search") || "";
+  const sectorFilter = searchParams.get("sector") || "";
+  const daysParam = searchParams.get("days") || "";
 
   useEffect(() => {
     // If we have initial items, use them. Otherwise, fetch fresh data.
@@ -56,6 +58,11 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
       if (!tags.includes(categoryFilter)) {
         return false;
       }
+    }
+
+    // Sector filter
+    if (sectorFilter && item.sector !== sectorFilter) {
+      return false;
     }
 
     // Search filter (case-insensitive search in title and snippet with word boundaries)
@@ -137,8 +144,13 @@ export default function FeedClient({ initialItems, limit }: FeedClientProps) {
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      // Archive page: use page param only (no limit) to get paginated response
-      const response = await fetchItems({ page: nextPage });
+      // Archive page: use page param with optional days filter to get paginated response
+      const fetchOptions: { page: number; days?: number } = { page: nextPage };
+      const daysValue = daysParam ? parseInt(daysParam, 10) : undefined;
+      if (daysValue && !isNaN(daysValue) && daysValue > 0) {
+        fetchOptions.days = daysValue;
+      }
+      const response = await fetchItems(fetchOptions);
       const newItems = response && 'items' in response ? response.items : [];
 
       if (newItems.length === 0 || newItems.length < 50) {

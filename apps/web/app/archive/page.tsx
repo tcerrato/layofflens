@@ -3,19 +3,32 @@ import FeedClient from "@/components/FeedClient";
 import TypeFilter from "@/components/TypeFilter";
 import CategoryFilter from "@/components/CategoryFilter";
 import SearchFilter from "@/components/SearchFilter";
+import Link from "next/link";
 
 // Dynamic rendering with 5-minute cache
 // Always fetches fresh data but caches at edge for 5 minutes to reduce API calls
 export const dynamic = 'force-dynamic';
 export const revalidate = 300; // Cache for 5 minutes (300 seconds)
 
-export default async function ArchivePage() {
+interface ArchivePageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function ArchivePage({ searchParams }: ArchivePageProps) {
+  const params = await searchParams;
+  const daysParam = params.days ? parseInt(params.days as string, 10) : undefined;
+  const sectorParam = params.sector as string | undefined;
   // Fetch first page (50 items) for fast initial load
+  // If days param is provided, API will filter to that time range
   // API returns paginated response when page param is used without limit
   let allFetchedItems: any[] = [];
   let totalCount = 0;
   try {
-    const response = await fetchItems({ page: 1 });
+    const fetchOptions: { page: number; days?: number } = { page: 1 };
+    if (daysParam && !isNaN(daysParam) && daysParam > 0) {
+      fetchOptions.days = daysParam;
+    }
+    const response = await fetchItems(fetchOptions);
     // When page is set without limit, API returns PaginatedResponse
     const paginatedData = response && typeof response === 'object' && 'pagination' in response
       ? response as PaginatedResponse
@@ -51,6 +64,35 @@ export default async function ArchivePage() {
           </div>
           <TypeFilter />
         </div>
+
+        {/* Active Filters Badge */}
+        {(sectorParam || daysParam) && (
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Active filters:
+            </span>
+            {sectorParam && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm rounded-full">
+                Sector: {sectorParam}
+              </span>
+            )}
+            {daysParam && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm rounded-full">
+                Last {daysParam} days
+              </span>
+            )}
+            <Link
+              href="/archive"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Clear filters
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </Link>
+          </div>
+        )}
+
         <div className="mt-4 space-y-3">
           <SearchFilter />
           <CategoryFilter availableTags={Array.from(allTags)} />
