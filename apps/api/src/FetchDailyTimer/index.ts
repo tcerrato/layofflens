@@ -10,7 +10,6 @@ const IMAGE_LOOKUP_CAP = 8; // Limit Serper Images API calls per run to stay wit
 
 async function fetchAndSaveItems(): Promise<number> {
   const now = new Date();
-  const dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
   let savedCount = 0;
   let imageLookups = 0;
 
@@ -20,7 +19,7 @@ async function fetchAndSaveItems(): Promise<number> {
     const layoffData = await extractLayoffData(news.title, news.snippet);
 
     const item: FeedItem = {
-      partitionKey: dateStr,
+      partitionKey: "news", // Use constant partition key to prevent duplicates
       rowKey: Buffer.from(news.link).toString("base64").replace(/[/+=]/g, "").substring(0, 63),
       title: news.title,
       link: news.link,
@@ -74,7 +73,7 @@ async function fetchAndSaveItems(): Promise<number> {
     // Classify as video if it's from any known video platform
     const isVideo = isVideoPlatform(video.link);
     const item: FeedItem = {
-      partitionKey: dateStr,
+      partitionKey: "news", // Use constant partition key to prevent duplicates
       rowKey: Buffer.from(video.link).toString("base64").replace(/[/+=]/g, "").substring(0, 63),
       title: video.title,
       link: video.link,
