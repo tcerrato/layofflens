@@ -6,6 +6,15 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: false,
+  // Force webpack to generate new chunk hashes
+  webpack: (config) => {
+    config.optimization = {
+      ...config.optimization,
+      moduleIds: 'deterministic',
+      chunkIds: 'deterministic',
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
