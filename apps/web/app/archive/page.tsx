@@ -5,10 +5,10 @@ import CategoryFilter from "@/components/CategoryFilter";
 import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
 
-// Dynamic rendering with 5-minute cache
-// Always fetches fresh data but caches at edge for 5 minutes to reduce API calls
+// Dynamic rendering without cache to prevent hydration mismatches
+// Filter parameters change frequently, so we need fresh data on every request
 export const dynamic = 'force-dynamic';
-export const revalidate = 300; // Cache for 5 minutes (300 seconds)
+export const revalidate = 0; // No caching
 
 interface ArchivePageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
