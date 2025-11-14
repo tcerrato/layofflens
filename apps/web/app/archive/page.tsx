@@ -3,6 +3,7 @@ import FeedClient from "@/components/FeedClient";
 import TypeFilter from "@/components/TypeFilter";
 import CategoryFilter from "@/components/CategoryFilter";
 import SearchFilter from "@/components/SearchFilter";
+import ItemCountDisplay from "@/components/ItemCountDisplay";
 import Link from "next/link";
 
 // Dynamic rendering without cache to prevent hydration mismatches
@@ -61,9 +62,7 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
             <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
               Archive
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mt-1" suppressHydrationWarning>
-              Displaying {displayedItems} of {totalCount} items
-            </p>
+            <ItemCountDisplay displayedItems={displayedItems} totalCount={totalCount} />
           </div>
           <TypeFilter />
         </div>
