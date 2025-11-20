@@ -202,7 +202,7 @@ export async function fetchDailyTimer(
 }
 
 app.timer("FetchDailyTimer", {
-  schedule: "0 0 0 * * *", // Run nightly at midnight UTC
+  schedule: "0 0 0,12 * * *", // Run twice daily at midnight UTC and noon UTC
   handler: fetchDailyTimer,
 });
 
