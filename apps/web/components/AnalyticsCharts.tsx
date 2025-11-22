@@ -215,7 +215,7 @@ export default function AnalyticsCharts({ stats }: AnalyticsChartsProps) {
               {topCompanies.map((company, index) => (
                 <Link
                   key={company.company}
-                  href={`/archive?search=${encodeURIComponent(company.company)}&category=Layoffs&filter=news`}
+                  href={`/archive?days=90&search=${encodeURIComponent(company.company)}&category=Layoffs&filter=news`}
                   className="flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-3 -mx-3 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
