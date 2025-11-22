@@ -16,17 +16,21 @@ export default function ArchivePageClient() {
   const [totalCount, setTotalCount] = useState(0);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastFetchParams, setLastFetchParams] = useState<string>("");
 
   useEffect(() => {
     const daysParam = searchParams.get("days");
     const sectorParam = searchParams.get("sector");
+
+    // Create a key for the server-side params to detect changes
+    const currentFetchKey = `${daysParam || "all"}-${sectorParam || "all"}`;
 
     // Don't re-fetch if only client-side filters changed (category, search, filter)
     // These are handled by FeedClient filtering
     // Only re-fetch when days or sector changes (server-side filters)
     const serverSideFiltersPresent = daysParam || sectorParam;
 
-    if (!serverSideFiltersPresent && items.length > 0) {
+    if (!serverSideFiltersPresent && items.length > 0 && lastFetchParams === currentFetchKey) {
       // Skip re-fetch, let FeedClient handle filtering
       return;
     }
@@ -54,6 +58,7 @@ export default function ArchivePageClient() {
 
         setItems(fetchedItems);
         setTotalCount(count);
+        setLastFetchParams(currentFetchKey);
 
         // Extract tags
         const tags = new Set<string>();
